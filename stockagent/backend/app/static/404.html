@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>404 – Page Not Found</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy-dark: #000814;
+      --navy-medium: #0d2d61;
+      --accent-blue: #3b82f6;
+      --accent-light: #60a5fa;
+      --white: #ffffff;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-400: #9ca3af;
+      --gray-600: #4b5563;
+      --gray-800: #1f2937;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--white);
+      color: var(--gray-800);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .error-code {
+      font-size: 8rem;
+      font-weight: 700;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-medium) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1rem;
+      letter-spacing: -0.05em;
+    }
+
+    .error-label {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: var(--gray-100);
+      color: var(--gray-600);
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 2rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .error-title {
+      font-size: 2rem;
+      font-weight: 600;
+      color: var(--navy-dark);
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .error-description {
+      font-size: 1.125rem;
+      color: var(--gray-600);
+      line-height: 1.7;
+      margin-bottom: 3rem;
+    }
+
+    .illustration {
+      width: 100%;
+      max-width: 400px;
+      height: 300px;
+      margin: 0 auto 3rem;
+      background: var(--gray-50);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--gray-200);
+    }
+
+    .illustration-icon {
+      font-size: 6rem;
+      opacity: 0.3;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      font-weight: 500;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--navy-dark);
+      color: var(--white);
+    }
+
+    .btn-primary:hover {
+      background: var(--navy-medium);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 8, 20, 0.15);
+    }
+
+    .btn-secondary {
+      background: var(--white);
+      color: var(--navy-dark);
+      border: 2px solid var(--gray-200);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--navy-dark);
+      transform: translateY(-2px);
+    }
+
+    .help-text {
+      margin-top: 3rem;
+      padding: 1.5rem;
+      background: var(--gray-50);
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      font-size: 0.875rem;
+      color: var(--gray-600);
+      line-height: 1.6;
+    }
+
+    .help-text code {
+      padding: 0.25rem 0.5rem;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 6px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.8125rem;
+      color: var(--navy-dark);
+    }
+
+    @media (max-width: 768px) {
+      .error-code {
+        font-size: 5rem;
+      }
+
+      .error-title {
+        font-size: 1.5rem;
+      }
+
+      .error-description {
+        font-size: 1rem;
+      }
+
+      .illustration {
+        height: 200px;
+        max-width: 300px;
+      }
+
+      .illustration-icon {
+        font-size: 4rem;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <div class="error-code" style="font-size:22px; font-weight:600;">Looks like this endpoint went to take a shower 🚿</div> 
+    <div class="image-wrapper">
+    <img src="img/ChatGPT Image man shower.png" style="width:300px;" />
+    </div>
+    <h1 class="error-title">Sorry… not available right now</h1>
+    <p class="error-description">
+      The page or API endpoint you're looking for couldn't be found. It might have been moved or doesn't exist.
+    </p>
+
+
+
+    <div class="button-group">
+      <a href="/ui/index.html" class="btn btn-primary">
+        <span>←</span>
+        Back to Home
+      </a>
+      <a href="/docs" class="btn btn-secondary">
+        <span>📚</span>
+        View API Docs
+      </a>
+    </div>
+
+    <div class="help-text">
+      <strong>For developers:</strong> Make sure you're calling a valid endpoint like <code>/analyze</code> or <code>/test-llm</code>. Check the API documentation for available routes.
+    </div>
+  </div>
+</body>
+</html>

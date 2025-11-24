@@ -13,11 +13,16 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.requests import Request
+
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 from pydantic import BaseModel, Field
 
 from .llm_client import ask_llm
 from .analysis import analyze_ticker
+
 
 app = FastAPI(
     title="Financial AI Agent",
@@ -42,6 +47,54 @@ if static_dir.exists():
 else:
     print(f"[WARNING] Static directory not found: {static_dir}")
 
+app = FastAPI(
+    title="Financial AI Agent",
+    description="Analyze stocks using live data + a local LLM",
+    version="0.1.0",
+)
+
+static_dir = Path(__file__).parent / "static"
+
+if static_dir.exists():
+    app.mount("/ui", StaticFiles(directory=str(static_dir), html=True), name="ui")
+else:
+    print(f"[WARNING] Static directory not found: {static_dir}")
+
+
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404:
+        html_path = static_dir / "404.html"
+        if html_path.exists():
+            html_content = html_path.read_text(encoding="utf-8")
+            return HTMLResponse(content=html_content, status_code=404)
+
+        return HTMLResponse(
+            content="<h1>404 - Not found</h1><p>Custom 404 page is missing.</p>",
+            status_code=404,
+        )
+
+    return HTMLResponse(
+        content=f"<h1>Error {exc.status_code}</h1><p>{exc.detail}</p>",
+        status_code=exc.status_code,
+    )
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 500:
+        html_path = static_dir / "500.html"
+        if html_path.exists():
+            html_content = html_path.read_text(encoding="utf-8")
+            return HTMLResponse(content=html_content, status_code=404)
+
+        return HTMLResponse(
+            content="<h1>500 - server down</h1><p>Custom 500 server down.</p>",
+            status_code=500,
+        )
+
+    return HTMLResponse(
+        content=f"<h1>Error {exc.status_code}</h1><p>{exc.detail}</p>",
+        status_code=exc.status_code,
+    )
 
 # Request/Response Models
 class AnalyzeRequest(BaseModel):
