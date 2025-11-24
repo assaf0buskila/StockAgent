@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Stock Research AI Agent</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      :root {
+        --bg-main: #050608;
+        --bg-card: #101318;
+        --bg-card-alt: #141821;
+        --accent: #00ff7f;
+        --accent-soft: rgba(0, 255, 127, 0.12);
+        --text-main: #f4f4f4;
+        --text-muted: #9ca3af;
+        --border-subtle: #1f2933;
+        --error: #f97373;
+        --shadow-soft: 0 18px 35px rgba(0, 0, 0, 0.7);
+        --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          Roboto, sans-serif;
+        --font-mono: "JetBrains Mono", Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: var(--font-sans);
+        background: radial-gradient(circle at top, #111827 0, #020617 55%);
+        color: var(--text-main);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: stretch;
+      }
+
+      .app-shell {
+        width: 100%;
+        max-width: 1200px;
+        padding: 1.5rem;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+      }
+
+      .header-left {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      .app-title {
+        font-size: 1.6rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .app-title span.logo-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 12px var(--accent);
+      }
+
+      .app-subtitle {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+      }
+
+      .header-right {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .pill {
+        border-radius: 999px;
+        padding: 0.3rem 0.7rem;
+        border: 1px solid var(--border-subtle);
+        background: rgba(15, 23, 42, 0.7);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+
+      .pill span.dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: var(--accent);
+        box-shadow: 0 0 8px var(--accent);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 2fr);
+        gap: 1.25rem;
+      }
+
+      /* Left column: controls + history */
+      .control-card {
+        background: linear-gradient(145deg, #050609, #0b0f17);
+        border-radius: 1.25rem;
+        padding: 1.3rem 1.4rem;
+        border: 1px solid rgba(75, 85, 99, 0.7);
+        box-shadow: var(--shadow-soft);
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .section-title {
+        font-size: 0.95rem;
+        font-weight: 500;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+
+      .ticker-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      .ticker-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      .ticker-input-row {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      input#ticker {
+        flex: 1;
+        padding: 0.6rem 0.75rem;
+        border-radius: 0.6rem;
+        border: 1px solid var(--border-subtle);
+        background: rgba(15, 23, 42, 0.9);
+        color: var(--text-main);
+        font-size: 0.95rem;
+        outline: none;
+        transition: border 0.12s ease, box-shadow 0.12s ease,
+          background 0.12s ease;
+      }
+
+      input#ticker::placeholder {
+        color: #6b7280;
+      }
+
+      input#ticker:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.5);
+        background: #020617;
+      }
+
+      button.primary-btn {
+        padding: 0.55rem 1.3rem;
+        border-radius: 0.6rem;
+        border: none;
+        background: radial-gradient(circle at top left, #22c55e, #16a34a);
+        color: #020617;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        box-shadow: 0 12px 25px rgba(34, 197, 94, 0.35);
+        transition: transform 0.12s ease, box-shadow 0.12s ease,
+          filter 0.12s ease;
+      }
+
+      button.primary-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 35px rgba(34, 197, 94, 0.45);
+        filter: brightness(1.05);
+      }
+
+      button.primary-btn:active:not(:disabled) {
+        transform: translateY(0px) scale(0.99);
+        box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4);
+      }
+
+      button.primary-btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+        box-shadow: none;
+      }
+
+      .secondary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+      }
+
+      .status {
+        font-size: 0.8rem;
+      }
+
+      .status span.dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        display: inline-block;
+        margin-right: 0.3rem;
+      }
+
+      .status-idle span.dot {
+        background: #6b7280;
+      }
+
+      .status-loading span.dot {
+        background: var(--accent);
+        box-shadow: 0 0 8px var(--accent);
+      }
+
+      .status-error span.dot {
+        background: var(--error);
+        box-shadow: 0 0 8px var(--error);
+      }
+
+      .filters-row {
+        border-top: 1px dashed rgba(55, 65, 81, 0.7);
+        padding-top: 0.7rem;
+        margin-top: 0.3rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      .filters-title {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .filters-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+      }
+
+      .filter-pill {
+        font-size: 0.75rem;
+        border-radius: 999px;
+        padding: 0.2rem 0.55rem;
+        border: 1px dashed rgba(75, 85, 99, 0.8);
+        color: var(--text-muted);
+        background: rgba(15, 23, 42, 0.8);
+        opacity: 0.7;
+      }
+
+      .filter-pill span {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        color: #6b7280;
+      }
+
+      /* History card */
+      .history-card {
+        margin-top: 0.5rem;
+        background: var(--bg-card-alt);
+        border-radius: 1rem;
+        padding: 0.8rem 1rem;
+        border: 1px solid rgba(55, 65, 81, 0.9);
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+
+      .history-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.8rem;
+      }
+
+      .history-header span {
+        color: var(--text-muted);
+      }
+
+      .history-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
+
+      .history-item {
+        font-size: 0.8rem;
+        border-radius: 999px;
+        border: 1px solid rgba(75, 85, 99, 0.9);
+        padding: 0.15rem 0.6rem;
+        background: rgba(15, 23, 42, 0.9);
+        cursor: pointer;
+        color: var(--text-main);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        transition: border 0.12s ease, background 0.12s ease,
+          transform 0.12s ease;
+      }
+
+      .history-item span.bullet {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+
+      .history-item:hover {
+        border-color: var(--accent);
+        background: rgba(22, 163, 74, 0.15);
+        transform: translateY(-1px);
+      }
+
+      .history-empty {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+      }
+
+      .clear-history-btn {
+        font-size: 0.75rem;
+        color: #6b7280;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      .clear-history-btn:hover {
+        color: #9ca3af;
+      }
+
+      /* Right column: analysis output */
+      .analysis-card {
+        background: linear-gradient(145deg, #020617, #050816);
+        border-radius: 1.3rem;
+        padding: 1.3rem 1.4rem;
+        border: 1px solid rgba(55, 65, 81, 0.9);
+        box-shadow: var(--shadow-soft);
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+      }
+
+      .analysis-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .analysis-title {
+        font-size: 0.95rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      .analysis-title span.bar {
+        height: 18px;
+        width: 3px;
+        border-radius: 999px;
+        background: linear-gradient(to bottom, var(--accent), #16a34a);
+      }
+
+      .analysis-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+      }
+
+      .analysis-meta-pill {
+        border-radius: 999px;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid rgba(55, 65, 81, 0.9);
+        background: rgba(15, 23, 42, 0.9);
+      }
+
+      .analysis-output {
+        margin-top: 0.3rem;
+        flex: 1;
+        min-height: 220px;
+        max-height: 480px;
+        border-radius: 0.9rem;
+        border: 1px solid rgba(55, 65, 81, 0.9);
+        background: radial-gradient(circle at top left, #020617, #020617);
+        padding: 0.9rem 1rem;
+        font-family: var(--font-mono);
+        font-size: 0.88rem;
+        color: #e5e7eb;
+        white-space: pre-wrap;
+        overflow: auto;
+      }
+
+      .analysis-output.placeholder {
+        color: #6b7280;
+      }
+
+      .error-banner {
+        display: none;
+        margin-top: 0.3rem;
+        border-radius: 0.7rem;
+        padding: 0.5rem 0.75rem;
+        background: rgba(248, 113, 113, 0.12);
+        border: 1px solid rgba(248, 113, 113, 0.5);
+        font-size: 0.8rem;
+        color: #fecaca;
+      }
+
+      .error-banner.visible {
+        display: block;
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .analysis-card {
+          margin-top: 1rem;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .app-shell {
+          padding: 1rem;
+        }
+
+        .header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .ticker-input-row {
+          flex-direction: column;
+        }
+
+        button.primary-btn {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="header">
+        <div class="header-left">
+          <div class="app-title">
+            <span class="logo-dot"></span>
+            <span>Stock Research AI Agent</span>
+          </div>
+          <div class="app-subtitle">
+            LLM-powered news &amp; sentiment layer on top of your tickers
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="pill">
+            <span class="dot"></span>
+            Backend: FastAPI @ localhost:8000
+          </div>
+          <div class="pill">
+            Model: Ollama <span>·</span> llama3
+          </div>
+        </div>
+      </header>
+
+      <main class="layout">
+        <!-- LEFT: controls + history -->
+        <section class="control-card">
+          <div class="section-title">Ticker search</div>
+
+          <div class="ticker-row">
+            <div class="ticker-label">Enter stock ticker (e.g. NVDA, AAPL):</div>
+            <div class="ticker-input-row">
+              <input
+                id="ticker"
+                type="text"
+                placeholder="e.g. NVDA"
+                autocomplete="off"
+              />
+              <button id="analyze-btn" class="primary-btn" onclick="analyze()">
+                <span>⚡</span>
+                <span>Analyze</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="secondary-row">
+            <div id="status" class="status status-idle">
+              <span class="dot"></span>
+              <span>Idle</span>
+            </div>
+            <div>Results come from /analyze endpoint.</div>
+          </div>
+
+          <div class="filters-row">
+            <div class="filters-title">Upcoming filters</div>
+            <div class="filters-pills">
+              <div class="filter-pill">
+                Timeframe: <span>30 days</span>
+              </div>
+              <div class="filter-pill">
+                News sentiment: <span>enabled</span>
+              </div>
+              <div class="filter-pill">
+                Risk focus: <span>medium term</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="history-card">
+            <div class="history-header">
+              <span>Recent tickers</span>
+              <button class="clear-history-btn" onclick="clearHistory()">
+                Clear
+              </button>
+            </div>
+            <div id="history-list" class="history-list"></div>
+            <div id="history-empty" class="history-empty">
+              No recent tickers yet. Run an analysis to start a history.
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT: analysis output -->
+        <section class="analysis-card">
+          <div class="analysis-header">
+            <div class="analysis-title">
+              <span class="bar"></span>
+              <span>Analysis Result</span>
+            </div>
+            <div class="analysis-meta">
+              <div class="analysis-meta-pill" id="meta-ticker">
+                Ticker: –
+              </div>
+              <div class="analysis-meta-pill" id="meta-status">
+                Sentiment &amp; impact summary
+              </div>
+            </div>
+          </div>
+
+          <div id="error-banner" class="error-banner"></div>
+
+          <pre id="output" class="analysis-output placeholder">
+Run your first analysis to see LLM output here. We’ll summarize recent news, infer sentiment, and discuss potential short- to medium-term impact based on the data pipeline behind /analyze.
+          </pre>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const API_URL = "http://localhost:8000/analyze";
+      const HISTORY_KEY = "stock_ai_recent_tickers";
+      const MAX_HISTORY = 8;
+
+      const tickerInput = document.getElementById("ticker");
+      const analyzeBtn = document.getElementById("analyze-btn");
+      const statusEl = document.getElementById("status");
+      const outputEl = document.getElementById("output");
+      const historyListEl = document.getElementById("history-list");
+      const historyEmptyEl = document.getElementById("history-empty");
+      const errorBannerEl = document.getElementById("error-banner");
+      const metaTickerEl = document.getElementById("meta-ticker");
+      const metaStatusEl = document.getElementById("meta-status");
+
+      function setStatus(mode, text) {
+        statusEl.classList.remove("status-idle", "status-loading", "status-error");
+        statusEl.classList.add(`status-${mode}`);
+        const spanText = statusEl.querySelector("span:last-child");
+        spanText.textContent = text;
+      }
+
+      function setError(message) {
+        if (!message) {
+          errorBannerEl.classList.remove("visible");
+          errorBannerEl.textContent = "";
+        } else {
+          errorBannerEl.textContent = message;
+          errorBannerEl.classList.add("visible");
+        }
+      }
+
+      function loadHistory() {
+        try {
+          const raw = localStorage.getItem(HISTORY_KEY);
+          if (!raw) {
+            historyListEl.innerHTML = "";
+            historyEmptyEl.style.display = "block";
+            return;
+          }
+          const items = JSON.parse(raw);
+          historyListEl.innerHTML = "";
+          if (!items.length) {
+            historyEmptyEl.style.display = "block";
+            return;
+          }
+          historyEmptyEl.style.display = "none";
+          items.forEach((ticker) => {
+            const btn = document.createElement("button");
+            btn.className = "history-item";
+            btn.type = "button";
+            btn.onclick = () => {
+              tickerInput.value = ticker;
+              analyze();
+            };
+
+            const bullet = document.createElement("span");
+            bullet.className = "bullet";
+
+            const label = document.createElement("span");
+            label.textContent = ticker;
+
+            btn.appendChild(bullet);
+            btn.appendChild(label);
+            historyListEl.appendChild(btn);
+          });
+        } catch (e) {
+          console.error("Failed to load history", e);
+        }
+      }
+
+      function saveToHistory(ticker) {
+        const symbol = ticker.toUpperCase().trim();
+        if (!symbol) return;
+        try {
+          const raw = localStorage.getItem(HISTORY_KEY);
+          let items = raw ? JSON.parse(raw) : [];
+          items = items.filter((t) => t !== symbol);
+          items.unshift(symbol);
+          if (items.length > MAX_HISTORY) {
+            items = items.slice(0, MAX_HISTORY);
+          }
+          localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+          loadHistory();
+        } catch (e) {
+          console.error("Failed to save history", e);
+        }
+      }
+
+      function clearHistory() {
+        localStorage.removeItem(HISTORY_KEY);
+        loadHistory();
+      }
+
+      async function analyze() {
+        const ticker = tickerInput.value.trim();
+        if (!ticker) {
+          alert("Please enter a ticker, e.g. NVDA");
+          return;
+        }
+
+        setError("");
+        setStatus("loading", `Analyzing ${ticker.toUpperCase()}…`);
+        analyzeBtn.disabled = true;
+        outputEl.classList.add("placeholder");
+        outputEl.textContent = "Running analysis, please wait…";
+
+        metaTickerEl.textContent = `Ticker: ${ticker.toUpperCase()}`;
+        metaStatusEl.textContent = "Fetching & processing data…";
+
+        try {
+          const res = await fetch(API_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ticker }),
+          });
+
+          if (!res.ok) {
+            let detail = "Request failed";
+            try {
+              const errJson = await res.json();
+              detail = errJson.detail || JSON.stringify(errJson);
+            } catch (_) {}
+            throw new Error(detail);
+          }
+
+          const data = await res.json();
+          const analysis = data.analysis || data.message || "No analysis text returned.";
+          outputEl.classList.remove("placeholder");
+          outputEl.textContent = analysis;
+
+          metaStatusEl.textContent = "LLM analysis ready";
+          setStatus("idle", "Done");
+          saveToHistory(ticker);
+        } catch (err) {
+          console.error(err);
+          setStatus("error", "Error");
+          setError("Error while analyzing ticker: " + err.message);
+          outputEl.classList.add("placeholder");
+          outputEl.textContent =
+            "Something went wrong while calling the /analyze endpoint.\n\n" +
+            "Check that:\n" +
+            "1) The FastAPI backend is running at http://localhost:8000\n" +
+            "2) The /analyze route is defined and reachable\n" +
+            "3) Your LLM / Ollama server is running.\n";
+        } finally {
+          analyzeBtn.disabled = false;
+        }
+      }
+
+      // Enter key triggers analyze
+      tickerInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          analyze();
+        }
+      });
+
+      // Initial load
+      loadHistory();
+    </script>
+  </body>
+</html>

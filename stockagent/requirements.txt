@@ -1,0 +1,30 @@
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+
+# HTTP Client
+httpx==0.26.0
+
+# Configuration & Validation
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+
+# Data Processing
+pandas==2.1.4
+
+# Stock Market Data
+yfinance==0.2.35
+
+# News Feeds
+feedparser==6.0.11
+
+# Optional: Premium News API (uncomment if using)
+# newsapi-python==0.2.7
+
+# Development Dependencies (optional, remove for production)
+# pytest==7.4.4
+# pytest-asyncio==0.23.3
+# black==23.12.1
+# flake8==7.0.0
+# mypy==1.8.0
