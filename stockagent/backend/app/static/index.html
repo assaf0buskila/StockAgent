@@ -2,64 +2,66 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>StockAgent – AI Stock Research</title>
+  <title>StockAgent – AI Market Intelligence</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
   <style>
     :root {
-      --navy-dark: #000814;
-      --navy-medium: #0b1d3a;
-      --navy-light: #1a2f4d;
-      --accent-blue: #3b82f6;
-      --accent-light: #60a5fa;
-      --white: #ffffff;
-      --gray-50: #f9fafb;
-      --gray-100: #f3f4f6;
-      --gray-200: #e5e7eb;
-      --gray-300: #d1d5db;
-      --gray-400: #9ca3af;
-      --gray-600: #4b5563;
-      --gray-800: #1f2937;
+      /* Modern Fintech Palette */
+      --primary: #0f172a;       /* Slate 900 */
+      --primary-light: #1e293b; /* Slate 800 */
+      --accent: #3b82f6;        /* Blue 500 */
+      --accent-glow: rgba(59, 130, 246, 0.15);
+      
+      --bg-body: #f8fafc;       /* Slate 50 */
+      --bg-card: #ffffff;
+      
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      
       --success: #10b981;
       --warning: #f59e0b;
       --error: #ef4444;
+      
+      --border: #e2e8f0;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+      --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--white);
-      color: var(--gray-800);
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-body);
+      color: var(--text-main);
       line-height: 1.6;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Header */
+    /* --- Header --- */
     .header {
-      background: var(--white);
-      border-bottom: 1px solid var(--gray-200);
-      padding: 1.25rem 2rem;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
-      z-index: 100;
-      backdrop-filter: blur(10px);
-      background: rgba(255, 255, 255, 0.95);
+      z-index: 50;
     }
-
-    .header-container {
+    
+    .header-content {
       max-width: 1200px;
       margin: 0 auto;
+      padding: 1rem 1.5rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -70,647 +72,424 @@
       align-items: center;
       gap: 0.75rem;
       text-decoration: none;
-      color: var(--navy-dark);
+      color: var(--primary);
     }
-
+    
     .logo-icon {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy-medium) 100%);
-      border-radius: 8px;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--primary) 0%, #334155 100%);
+      color: white;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--white);
       font-weight: 700;
-      font-size: 18px;
-    }
-
-    .logo-text {
       font-size: 1.25rem;
-      font-weight: 600;
-      letter-spacing: -0.02em;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .logo-text {
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.025em;
     }
 
-    .header-nav {
-      display: flex;
-      align-items: center;
-      gap: 2rem;
-    }
-
+    /* Status Dot Pulse Animation */
     .status-badge {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       padding: 0.5rem 1rem;
-      background: var(--gray-50);
-      border-radius: 999px;
-      font-size: 0.875rem;
-      color: var(--gray-600);
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      box-shadow: var(--shadow-sm);
     }
-
+    
     .status-dot {
       width: 8px;
       height: 8px;
+      background-color: var(--success);
       border-radius: 50%;
-      background: var(--success);
+      position: relative;
+    }
+    
+    .status-dot::after {
+      content: '';
+      position: absolute;
+      top: -4px; left: -4px; right: -4px; bottom: -4px;
+      background-color: rgba(16, 185, 129, 0.2);
+      border-radius: 50%;
       animation: pulse 2s infinite;
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
     }
 
-    .header-link {
-      color: var(--gray-600);
-      text-decoration: none;
-      font-size: 0.875rem;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-
-    .header-link:hover {
-      color: var(--navy-dark);
-    }
-
-    /* Main Content */
+    /* --- Main Layout --- */
     .main {
       flex: 1;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 4rem 2rem;
+      max-width: 1000px;
       width: 100%;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
     }
 
     /* Hero Section */
     .hero {
       text-align: center;
-      margin-bottom: 4rem;
-      animation: fadeIn 0.6s ease-out;
+      margin-bottom: 3rem;
+      animation: fadeIn 0.8s ease-out;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .hero-label {
-      display: inline-block;
-      padding: 0.5rem 1rem;
-      background: var(--gray-100);
-      color: var(--navy-medium);
-      border-radius: 999px;
-      font-size: 0.875rem;
-      font-weight: 500;
-      margin-bottom: 1.5rem;
-      letter-spacing: 0.02em;
-    }
-
-    .hero-title {
+    .hero h1 {
       font-size: 3.5rem;
-      font-weight: 700;
+      font-weight: 800;
       line-height: 1.1;
-      color: var(--navy-dark);
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
       letter-spacing: -0.03em;
+      color: var(--primary);
     }
-
-    .hero-title-accent {
-      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-light) 100%);
+    
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--accent) 0%, #60a5fa 100%);
+      background-clip: text;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      background-clip: text;
     }
 
-    .hero-subtitle {
+    .hero p {
       font-size: 1.25rem;
-      color: var(--gray-600);
+      color: var(--text-muted);
       max-width: 600px;
-      margin: 0 auto 3rem;
-      font-weight: 400;
-      line-height: 1.6;
+      margin: 0 auto;
     }
 
-    /* Form Section */
-    .form-section {
-      background: var(--gray-50);
+    /* Search Bar */
+    .search-container {
+      background: var(--bg-card);
+      padding: 0.75rem;
       border-radius: 16px;
-      padding: 3rem;
-      margin-bottom: 4rem;
-      border: 1px solid var(--gray-200);
-    }
-
-    .form-label {
-      font-size: 0.875rem;
-      font-weight: 500;
-      color: var(--gray-600);
-      margin-bottom: 0.75rem;
-      display: block;
-    }
-
-    .input-group {
+      box-shadow: var(--shadow-lg);
       display: flex;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
+      gap: 0.5rem;
+      max-width: 700px;
+      margin: 0 auto 1rem;
+      border: 1px solid var(--border);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .search-container:focus-within {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+      border-color: var(--accent);
     }
 
     .ticker-input {
       flex: 1;
-      min-width: 250px;
-      padding: 1rem 1.5rem;
-      font-size: 1rem;
-      border: 2px solid var(--gray-200);
-      border-radius: 12px;
-      background: var(--white);
-      color: var(--gray-800);
-      outline: none;
-      transition: all 0.2s;
-      font-family: inherit;
-      text-transform: uppercase;
-    }
-
-    .ticker-input::placeholder {
-      color: var(--gray-400);
-      text-transform: none;
-    }
-
-    .ticker-input:focus {
-      border-color: var(--accent-blue);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    .btn {
-      padding: 1rem 2rem;
-      font-size: 1rem;
-      font-weight: 500;
       border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      white-space: nowrap;
-    }
-
-    .btn-primary {
-      background: var(--navy-dark);
-      color: var(--white);
-    }
-
-    .btn-primary:hover {
-      background: var(--navy-medium);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(0, 8, 20, 0.15);
-    }
-
-    .btn-secondary {
-      background: var(--white);
-      color: var(--navy-dark);
-      border: 2px solid var(--gray-200);
-    }
-
-    .btn-secondary:hover {
-      border-color: var(--navy-dark);
-      transform: translateY(-2px);
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .form-status {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.875rem;
-      color: var(--gray-600);
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .status-indicator {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      background: var(--white);
-      border-radius: 999px;
-      border: 1px solid var(--gray-200);
-    }
-
-    .status-indicator-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--gray-400);
-    }
-
-    .status-indicator-dot.active {
-      background: var(--success);
-    }
-
-    .status-indicator-dot.error {
-      background: var(--error);
-    }
-
-    .error-message {
-      color: var(--error);
-      font-size: 0.875rem;
-      margin-top: 1rem;
-      padding: 0.75rem 1rem;
-      background: rgba(239, 68, 68, 0.1);
-      border-radius: 8px;
-      display: none;
-    }
-
-    .error-message.visible {
-      display: block;
-    }
-
-    /* Results Grid */
-    .results-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 4rem;
-    }
-
-    .result-card {
-      background: var(--white);
-      border: 1px solid var(--gray-200);
-      border-radius: 16px;
-      padding: 2rem;
-      transition: all 0.2s;
-      min-height: 300px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .result-card:hover {
-      border-color: var(--gray-300);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    }
-
-    .result-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--gray-200);
-    }
-
-    .result-title {
       font-size: 1.125rem;
+      padding: 0 1.5rem;
+      outline: none;
+      font-family: inherit;
+      color: var(--primary);
+      text-transform: uppercase;
       font-weight: 600;
-      color: var(--navy-dark);
+    }
+    
+    .ticker-input::placeholder {
+      color: #94a3b8;
+      text-transform: none;
+      font-weight: 400;
+    }
+
+    .btn-search {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .btn-search:hover { background: var(--primary-light); }
+    .btn-search:disabled { opacity: 0.7; cursor: not-allowed; }
+
+    /* --- Result Card --- */
+    .result-card {
+      background: var(--bg-card);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+      margin-top: 3rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease-out;
+    }
+
+    .result-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .card-header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+    }
+    
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--primary);
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
 
-    .result-icon {
-      font-size: 1.25rem;
+    /* Verdict Badge */
+    .verdict-badge {
+      font-size: 0.875rem;
+      font-weight: 700;
+      padding: 0.5rem 1.25rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .badge-buy { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-sell { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .badge-hold { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .badge-wait { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+
+    /* Chart Area - UPDATED: REMOVED ANIMATION TRANSITION */
+    .chart-container {
+      width: 100%;
+      height: 0;
+      overflow: hidden;
+      /* transition: height 0.3s ease;  <-- REMOVED THIS LINE TO FIX SQUASHING */
+      background: white;
+      border-bottom: 1px solid var(--border);
+      display: none; /* Initially hidden */
+    }
+    .chart-container.active { 
+        display: block; 
+        height: auto; 
     }
 
-    .result-body {
-      flex: 1;
-      font-size: 0.9375rem;
-      line-height: 1.7;
-      color: var(--gray-600);
-      white-space: pre-wrap;
-    }
-
-    .result-empty {
-      color: var(--gray-400);
-      font-style: italic;
-    }
-
-    /* DISCLAIMER BOX STYLE - NEW! */
-    .disclaimer-box {
+    /* Analysis Text */
+    .analysis-content { padding: 2.5rem; font-size: 1rem; color: var(--text-main); }
+    
+    .analysis-content h3 {
+      font-size: 1.15rem;
+      color: var(--primary);
       margin-top: 2rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border);
+    }
+    
+    .analysis-content h3:first-child { margin-top: 0; }
+    
+    .analysis-content ul { padding-left: 1.5rem; margin-bottom: 1.5rem; }
+    .analysis-content li { margin-bottom: 0.5rem; color: var(--text-muted); }
+    .analysis-content strong { color: var(--primary); font-weight: 600; }
+
+    /* Disclaimer */
+    .disclaimer {
+      margin: 2rem 2.5rem;
       padding: 1rem;
-      background-color: var(--gray-50);
-      border: 1px solid var(--gray-200);
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
       border-radius: 8px;
-      font-size: 0.75rem;
-      color: var(--gray-600);
+      font-size: 0.8rem;
+      color: #92400e;
       text-align: center;
       line-height: 1.5;
     }
 
-    .disclaimer-box strong {
-      color: var(--gray-800);
-      display: block;
-      margin-bottom: 0.25rem;
-    }
-
-    /* Verdict Badge Styles */
-    .verdict-badge {
-      padding: 0.375rem 1rem;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 700;
-      border: 1px solid;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .verdict-badge[data-verdict="BUY"] {
-      background: rgba(16, 185, 129, 0.1);
-      color: var(--success);
-      border-color: var(--success);
-    }
-
-    .verdict-badge[data-verdict="SELL"] {
-      background: rgba(239, 68, 68, 0.1);
-      color: var(--error);
-      border-color: var(--error);
-    }
-
-    .verdict-badge[data-verdict="HOLD"] {
-      background: rgba(245, 158, 11, 0.1);
-      color: var(--warning);
-      border-color: var(--warning);
-    }
-
-    .verdict-badge[data-verdict="WAITING"] {
-      background: var(--gray-100);
-      color: var(--gray-500);
-      border-color: var(--gray-200);
-    }
-
-    /* Markdown Heading Fixes for the Result Body */
-    .result-body h3 {
-        color: var(--navy-dark);
-        font-size: 1.1rem;
-        margin-top: 1.5rem;
-        margin-bottom: 0.5rem;
-        border-bottom: 2px solid var(--gray-100);
-        padding-bottom: 0.25rem;
-    }
-    .result-body ul {
-        margin-left: 1.5rem;
-        margin-bottom: 1rem;
-    }
-    .result-body strong {
-        color: var(--navy-medium);
-        font-weight: 600;
-    }
-
     /* Footer */
     .footer {
-      background: var(--gray-50);
-      border-top: 1px solid var(--gray-200);
-      padding: 2rem;
       text-align: center;
-      font-size: 0.875rem;
-      color: var(--gray-600);
+      padding: 2rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: auto;
     }
 
-    .footer-accent {
-      color: var(--accent-blue);
-      font-weight: 500;
-    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: 0; } }
 
     /* Responsive */
-    @media (max-width: 768px) {
-      .header {
-        padding: 1rem;
-      }
-      .main {
-        padding: 2rem 1rem;
-      }
-      .hero-title {
-        font-size: 2.5rem;
-      }
-      .input-group {
-        flex-direction: column;
-      }
-      .ticker-input {
-        min-width: 100%;
-      }
-      .btn {
-        width: 100%;
-        justify-content: center;
-      }
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 2.5rem; }
+      .search-container { flex-direction: column; padding: 1rem; }
+      .ticker-input { text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.5rem; }
     }
   </style>
 </head>
 <body>
+
   <header class="header">
-    <div class="header-container">
+    <div class="header-content">
       <a href="/" class="logo">
         <div class="logo-icon">S</div>
         <span class="logo-text">StockAgent</span>
       </a>
-      <nav class="header-nav">
-        <div class="status-badge">
-          <div class="status-dot" id="health-dot"></div>
-          <span id="health-text">Checking...</span>
-        </div>
-        <a href="/docs" class="header-link">API Docs</a>
-      </nav>
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        <span>System Online</span>
+      </div>
     </div>
   </header>
 
   <main class="main">
+    
     <section class="hero">
-      <div class="hero-label">AI-Powered Data Analyst</div>
-      <h1 class="hero-title">
-        Market insights with <span class="hero-title-accent">Math & Logic</span>
-      </h1>
-      <p class="hero-subtitle">
-        Powered by RSI, Moving Averages, and Llama 3.2. Enter a ticker to generate a full technical report.
-      </p>
+      <h1>Market <span>Intelligence</span></h1>
+      <p>Institutional-grade analysis powered by AI & Algorithms.</p>
     </section>
 
-    <section class="form-section">
-      <label class="form-label">Stock Ticker</label>
-      <div class="input-group">
-        <input
-          id="ticker-input"
-          class="ticker-input"
-          type="text"
-          placeholder="Enter ticker (e.g., NVDA, TSLA)"
-          autocomplete="off"
-        />
-        <button id="analyze-btn" class="btn btn-primary">
-          <span>→</span>
-          Analyze Ticker
-        </button>
-        <button id="test-llm-btn" class="btn btn-secondary">
-          Test Connection
-        </button>
-      </div>
-      <div class="form-status">
-        <div class="status-indicator">
-          <div class="status-indicator-dot" id="analysis-status-dot"></div>
-          <span id="analysis-status-label">System Ready</span>
-        </div>
-        <div>New: Includes <strong>Golden Cross</strong> Detection</div>
-      </div>
-      <div id="error-box" class="error-message"></div>
-    </section>
+    <div class="search-container">
+      <input 
+        id="ticker-input" 
+        class="ticker-input" 
+        type="text" 
+        placeholder="Enter Ticker (e.g. NVDA)" 
+        autocomplete="off"
+      >
+      <button id="analyze-btn" class="btn-search">Run Analysis</button>
+    </div>
+    
+    <div id="status-msg" style="text-align:center; color: var(--text-muted); height: 20px; font-size: 0.9rem;"></div>
 
-    <section class="results-grid">
-      <article class="result-card">
-        <div class="result-header">
-          <div class="result-title">
-            <span class="result-icon">📊</span>
-            Analyst Report
-          </div>
-          <div class="verdict-badge" id="verdict-badge" data-verdict="WAITING">
-            Enter Ticker
-          </div>
+    <article class="result-card" id="result-card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Analyst Report
         </div>
-        <div class="result-body" id="analysis-text">
-          <span class="result-empty">
-            Run an analysis to see a structured breakdown of Technicals, News Sentiment, and the Final Verdict.
-          </span>
+        <div id="verdict-badge" class="verdict-badge badge-wait">Awaiting Input</div>
+      </div>
+
+      <div id="chart-div" class="chart-container"></div>
+
+      <div class="analysis-content" id="analysis-text">
+        <div style="text-align: center; color: var(--text-muted); padding: 2rem;">
+          Enter a stock ticker above to generate a full fundamental & technical report.
         </div>
-        
-        <div class="disclaimer-box">
-          <strong>⚠️ IMPORTANT LEGAL DISCLAIMER:</strong>
-          This report is generated by an Artificial Intelligence system and is for <strong>educational and informational purposes only</strong>. It relies on third-party data which may be delayed or inaccurate. 
-          <br/><br/>
-          This is <strong>NOT financial advice</strong>. Do not buy or sell securities based solely on this information. Always consult a certified financial advisor before making investment decisions.
-        </div>
-        </article>
-    </section>
+      </div>
+
+      <div class="disclaimer">
+        <strong>⚠️ DISCLAIMER:</strong> This report is AI-generated for educational purposes only. It is NOT financial advice. Always consult a certified professional before investing.
+      </div>
+    </article>
+
   </main>
 
   <footer class="footer">
-    Built with <span class="footer-accent">FastAPI</span>, <span class="footer-accent">Ollama</span>, and <span class="footer-accent">Pandas</span>
+    Built with <strong>FastAPI</strong>, <strong>Ollama</strong>, <strong>Plotly</strong> & <strong>Pandas</strong>
   </footer>
 
   <script>
     const tickerInput = document.getElementById("ticker-input");
     const analyzeBtn = document.getElementById("analyze-btn");
-    const testLlmBtn = document.getElementById("test-llm-btn");
     const analysisText = document.getElementById("analysis-text");
     const verdictBadge = document.getElementById("verdict-badge");
-    const errorBox = document.getElementById("error-box");
-    const healthDot = document.getElementById("health-dot");
-    const healthText = document.getElementById("health-text");
-    const analysisStatusDot = document.getElementById("analysis-status-dot");
-    const analysisStatusLabel = document.getElementById("analysis-status-label");
+    const statusMsg = document.getElementById("status-msg");
+    const chartDiv = document.getElementById("chart-div");
+    const resultCard = document.getElementById("result-card");
 
-    // Helper: Markdown cleaner
+    // Make card visible on load for visual structure
+    setTimeout(() => resultCard.classList.add('visible'), 300);
+
     function formatMarkdown(text) {
         if (!text) return "";
-        let html = text
-            // 1. Remove all double asterisks (**) used for bolding
+        return text
             .replace(/\*\*/g, "") 
-            // 2. Turn Headers (###) into HTML tags
             .replace(/^### (.*$)/gim, '<h3>$1</h3>') 
             .replace(/^## (.*$)/gim, '<h3>$1</h3>')
-            // 3. Turn List items (- or *) into bullet points
             .replace(/^[-*] (.*$)/gim, '<ul><li>$1</li></ul>') 
-            // 4. Handle newlines
             .replace(/\n/gim, '<br />'); 
-        return html;
     }
 
-    function setHealthStatus(ok, message) {
-      if (ok) {
-        healthDot.style.background = "var(--success)";
-        healthText.textContent = message || "Online";
-      } else {
-        healthDot.style.background = "var(--error)";
-        healthText.textContent = message || "Offline";
+    function renderChart(data, ticker) {
+      if (!data || !data.dates || data.dates.length === 0) {
+        chartDiv.classList.remove("active");
+        return;
       }
-    }
-
-    function setStatus(state, text) {
-      if (state === "idle") {
-        analysisStatusDot.className = "status-indicator-dot";
-        analysisStatusLabel.textContent = text || "Ready";
-      } else if (state === "running") {
-        analysisStatusDot.className = "status-indicator-dot active";
-        analysisStatusLabel.textContent = text || "Processing...";
-      } else if (state === "error") {
-        analysisStatusDot.className = "status-indicator-dot error";
-        analysisStatusLabel.textContent = text || "Error";
-      }
-    }
-
-    function setVerdict(text) {
-        verdictBadge.dataset.verdict = "WAITING";
-        verdictBadge.textContent = "ANALYSIS READY";
-
-        if (!text) return;
-
-        const match = text.match(/Verdict:\s*(BUY|SELL|HOLD)/i);
-
-        if (match && match[1]) {
-            const verdict = match[1].toUpperCase();
-            verdictBadge.dataset.verdict = verdict;
-            verdictBadge.textContent = verdict; 
-        } else {
-            verdictBadge.dataset.verdict = "WAITING";
-            verdictBadge.textContent = "INSIGHTS";
-        }
-    }
-
-    async function checkHealth() {
-      try {
-        const res = await fetch("/health");
-        if (!res.ok) throw new Error("Health check failed");
-        setHealthStatus(true, "System Online");
-      } catch (err) {
-        setHealthStatus(false, "API Offline");
-      }
-    }
-
-    async function handleTestLlm() {
-      errorBox.classList.remove("visible");
-      setStatus("running", "Testing LLM...");
-      analyzeBtn.disabled = true;
-      testLlmBtn.disabled = true;
       
-      try {
-        const res = await fetch("/test-llm", { method: "POST" });
-        if (!res.ok) throw new Error("LLM test failed");
-        const data = await res.json();
-        
-        analysisText.innerHTML = "<strong>LLM Connection Successful:</strong><br/>" + (data.reply || "OK");
-        verdictBadge.dataset.verdict = "WAITING";
-        verdictBadge.textContent = "CONNECTED";
-        setStatus("idle", "LLM Connected");
-      } catch (err) {
-        errorBox.textContent = "LLM test failed. Is Ollama running?";
-        errorBox.classList.add("visible");
-        setStatus("error", "LLM Error");
-      } finally {
-        analyzeBtn.disabled = false;
-        testLlmBtn.disabled = false;
-      }
+      chartDiv.classList.add("active");
+      
+      const trace = {
+        x: data.dates,
+        close: data.close,
+        decreasing: {line: {color: '#ef4444'}},
+        high: data.high,
+        increasing: {line: {color: '#10b981'}},
+        line: {color: '#1e293b'},
+        low: data.low,
+        open: data.open,
+        type: 'candlestick', 
+        xaxis: 'x', 
+        yaxis: 'y'
+      };
+
+      const layout = {
+        title: { text: `${ticker} • 1 Year Price Action`, font: { size: 14 } },
+        dragmode: 'zoom', 
+        showlegend: false, 
+        font: { family: 'Inter, sans-serif' },
+        xaxis: { rangeslider: { visible: false }, gridcolor: '#f1f5f9' },
+        yaxis: { gridcolor: '#f1f5f9' },
+        margin: { r: 40, t: 40, b: 40, l: 40 },
+        height: 500, // <--- EXPLICIT HEIGHT FIX
+        plot_bgcolor: "white",
+        paper_bgcolor: "white"
+      };
+
+      Plotly.newPlot('chart-div', [trace], layout, {responsive: true});
+    }
+
+    function setVerdictStyle(verdict) {
+      verdictBadge.className = "verdict-badge"; // Reset
+      if (verdict === "BUY") verdictBadge.classList.add("badge-buy");
+      else if (verdict === "SELL") verdictBadge.classList.add("badge-sell");
+      else if (verdict === "HOLD") verdictBadge.classList.add("badge-hold");
+      else verdictBadge.classList.add("badge-wait");
+      
+      verdictBadge.textContent = verdict || "Ready";
     }
 
     async function handleAnalyze() {
       const ticker = tickerInput.value.trim().toUpperCase();
-      errorBox.classList.remove("visible");
+      if (!ticker) return;
 
-      if (!ticker) {
-        errorBox.textContent = "Please enter a ticker symbol.";
-        errorBox.classList.add("visible");
-        return;
-      }
-
-      setStatus("running", "Crunching numbers for " + ticker + "...");
+      statusMsg.textContent = `Gathering data for ${ticker}... (Price, News, Fundamentals)`;
       analyzeBtn.disabled = true;
-      testLlmBtn.disabled = true;
-      analysisText.innerHTML = '<span class="result-empty">Analyzing ' + ticker + '... This may take 10-20 seconds.</span>';
+      chartDiv.classList.remove("active"); // Hide old chart
+      setVerdictStyle("PROCESSING...");
       
-      verdictBadge.dataset.verdict = "WAITING";
-      verdictBadge.textContent = "CALCULATING...";
+      analysisText.innerHTML = `
+        <div style="display:flex; justify-content:center; padding:3rem;">
+           <div class="status-dot" style="width:12px; height:12px; background:var(--accent);"></div>
+        </div>
+      `;
 
       try {
         const res = await fetch("/analyze", {
@@ -719,39 +498,39 @@
           body: JSON.stringify({ ticker }),
         });
 
-        if (!res.ok) {
-          const errorBody = await res.json().catch(() => null);
-          const msg = (errorBody && (errorBody.detail || errorBody.message)) || "Analysis failed.";
-          throw new Error(msg);
+        if (!res.ok) throw new Error("Analysis failed");
+        const data = await res.json();
+
+        // 1. Render Text
+        analysisText.innerHTML = formatMarkdown(data.analysis || "");
+        
+        // 2. Render Verdict
+        const match = (data.analysis || "").match(/Verdict:\s*(BUY|SELL|HOLD)/i);
+        if (match && match[1]) {
+            setVerdictStyle(match[1].toUpperCase());
+        } else {
+            setVerdictStyle("INSIGHTS");
         }
 
-        const data = await res.json();
-        const rawText = data.analysis || "";
+        // 3. Render Chart
+        if (data.chart_data) {
+          renderChart(data.chart_data, ticker);
+        }
 
-        analysisText.innerHTML = formatMarkdown(rawText);
-
-        setVerdict(rawText.replace(/\*\*/g, ""));
-
-        setStatus("idle", "Analysis Complete");
+        statusMsg.textContent = `Analysis complete for ${ticker}`;
       } catch (err) {
-        errorBox.textContent = err.message || "Unexpected error during analysis.";
-        errorBox.classList.add("visible");
-        setStatus("error", "Failed");
-        analysisText.innerHTML = '<span class="result-empty">Analysis failed. Check the error message above.</span>';
-        verdictBadge.textContent = "ERROR";
+        statusMsg.textContent = "Error: " + err.message;
+        setVerdictStyle("ERROR");
+        analysisText.innerHTML = `<div style="color:var(--error); text-align:center;">${err.message}</div>`;
       } finally {
         analyzeBtn.disabled = false;
-        testLlmBtn.disabled = false;
       }
     }
 
     analyzeBtn.addEventListener("click", handleAnalyze);
-    testLlmBtn.addEventListener("click", handleTestLlm);
     tickerInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") handleAnalyze();
     });
-
-    checkHealth();
   </script>
 </body>
 </html>

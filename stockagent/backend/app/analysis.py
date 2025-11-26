@@ -6,43 +6,47 @@ This module orchestrates the data fetching and LLM analysis pipeline.
 
 from typing import Optional
 from .llm_client import ask_llm
-from .data_sources import get_price_history, get_news
+# Updated import line based on your request
+from .data_sources import get_price_history, get_news, get_fundamentals, format_market_cap, get_company_info
 
 
 async def analyze_ticker(ticker: str) -> str:
     """
-    Analyze a stock ticker using real-time data and LLM.
+    Analyze a stock ticker using real-time data, fundamentals, and LLM.
     
     This function:
-    1. Fetches price history from yfinance
-    2. Fetches recent news from Google News RSS
-    3. Constructs a detailed prompt for the LLM
-    4. Returns the LLM's analysis
+    1. Fetches price history + technicals
+    2. Fetches fundamental valuation data
+    3. Fetches recent news
+    4. Returns the LLM's comprehensive analysis
     
     Args:
         ticker: Stock ticker symbol (e.g., 'NVDA', 'AAPL')
         
     Returns:
         str: Formatted analysis from the LLM
-        
-    Raises:
-        ValueError: If no data can be fetched for the ticker
-        Exception: If LLM analysis fails
     """
     print(f"[INFO] Starting analysis for {ticker}...")
     
-    # Step 1: Fetch real market data
+    # Step 1: Fetch Market Data (Price + Technicals)
     print(f"[INFO] Fetching price history for {ticker}...")
     try:
         price_data = get_price_history(ticker)
+        if "No price data found" in price_data:
+            raise ValueError(f"No price data available for ticker {ticker}. Please verify the symbol is correct.")
     except Exception as e:
         print(f"[ERROR] Failed to fetch price data: {e}")
         raise ValueError(f"Could not fetch price data for {ticker}: {str(e)}")
     
-    # Check if we got valid data
-    if "No price data found" in price_data:
-        raise ValueError(f"No price data available for ticker {ticker}. Please verify the symbol is correct.")
-    
+    # Step 2: Fetch Fundamental Data (Valuation) - NEW!
+    print(f"[INFO] Fetching fundamentals for {ticker}...")
+    try:
+        fund_data = get_fundamentals(ticker)
+    except Exception as e:
+        print(f"[WARNING] Failed to fetch fundamentals: {e}")
+        fund_data = "Fundamentals unavailable."
+
+    # Step 3: Fetch News
     print(f"[INFO] Fetching news for {ticker}...")
     try:
         news_data = get_news(ticker)
@@ -50,42 +54,48 @@ async def analyze_ticker(ticker: str) -> str:
         print(f"[WARNING] Failed to fetch news: {e}")
         news_data = f"Unable to fetch news for {ticker} at this time."
     
-    # Step 2: Construct the analysis prompt
-    # UPDATED: Added specific instructions for Technical Analysis
-    prompt = f"""You are a professional financial analyst using a mix of fundamental news and technical indicators.
+    # Step 4: Construct the Analysis Prompt
+    prompt = f"""You are a professional financial analyst. You analyze Technicals (Charts), Fundamentals (Value), and Sentiment (News).
 
-Analyze the following data for **{ticker}** and provide a structured report.
+Analyze the following data for **{ticker}** and provide a strategic report.
 
-MARKET DATA & TECHNICALS
+## 1. MARKET DATA & TECHNICALS
 {price_data}
 
-RECENT NEWS
+## 2. FUNDAMENTAL DATA (Valuation & Health)
+{fund_data}
+
+## 3. RECENT NEWS
 {news_data}
 
-YOUR TASK
-Provide a report with these exact sections:
+## YOUR TASK
+Write a report with these exact sections:
 
-1. Executive Summary
- Give a 2-sentence overview of the current situation.
+### 1. Executive Summary
+- Give a 2-sentence overview of the situation.
 
-2. Technical Analysis
-RSI: State the value.
-Trend: Compare Price vs SMA 50.
-Signals:ONLY mention a "Golden Cross" or "Death Cross" if the "Trend Signal" data explicitly says "Active". Do not infer this yourself.
+### 2. Fundamental Analysis (Value)
+- **Valuation:** Is the P/E Ratio high or low? (Historical avg is ~20-25).
+- **Health:** Comment on Profit Margins or Growth. Is this a profitable company?
 
-3. News Sentiment
-  Summarize the top news drivers.
-  Rate sentiment as Bullish, Bearish, or Neutral.
+### 3. Technical Analysis (Momentum)
+- **RSI:** State the value.
+- **Trend:** Compare Price vs SMA 50.
+- **Signals:** ONLY mention "Golden Cross" or "Death Cross" if explicitly stated in the data.
 
-4. Outlook & Recommendation
-Verdict: BUY, SELL, or HOLD.
-Reasoning: Combine the technicals (RSI/Trends) with the news sentiment.
-Risk: Mention 1 key risk factor.
+### 4. News Sentiment
+- Summarize top drivers.
+- Rate sentiment: Bullish/Bearish/Neutral.
 
-Style: Professional, concise, using Markdown formatting.
+### 5. Final Verdict & Recommendation
+- **Verdict:** BUY, SELL, or HOLD.
+- **Reasoning:** Weigh the Fundamentals (is it a good company?) against Technicals (is it a good time to buy?).
+- **Risk:** Mention 1 key risk.
+
+**Style:** Professional, concise, Markdown.
 """
     
-    # Step 3: Send to LLM for analysis
+    # Step 5: Send to LLM
     print(f"[INFO] Sending data to LLM...")
     try:
         analysis = await ask_llm(prompt)
@@ -119,7 +129,6 @@ No other text, just the JSON."""
         # Try to parse as JSON, fallback to neutral if parsing fails
         try:
             import json
-            # Find the start and end of the JSON object in case LLM adds extra text
             start = response.find('{')
             end = response.rfind('}') + 1
             if start != -1 and end != -1:
