@@ -1,120 +1,49 @@
-# StockAgent – Financial AI Research Assistant
+# StockAgent – AI Financial Analyst 📈
 
-StockAgent is a **local financial research agent** that lets you analyze stock tickers using:
+**StockAgent** is a professional-grade local research assistant that combines **Real-time Data**, **Technical Analysis**, and **LLM reasoning** to generate institutional-quality stock reports.
 
-- **Real-time market data** from Yahoo Finance (`yfinance`)
-- **Recent news** from Google News RSS feeds
-- A **local LLM (Ollama)** for smart, narrative analysis and sentiment
-
-The backend is built with **FastAPI**, and the frontend is a single HTML page served as static files.
+Unlike basic wrappers, StockAgent uses **Pandas** to calculate its own indicators (RSI, SMA, Crosses) and **Ollama** to synthesize the data into a strategic verdict (BUY/SELL/HOLD).
 
 ---
 
-## Features
+## 🚀 Key Features
 
-- 🔎 Analyze a single ticker with one click (e.g. `NVDA`, `AAPL`)
-- 📊 Fetch recent **price history** via `yfinance`
-- 📰 Get the latest **news headlines** via Google News RSS
-- 🧠 Use a local **Ollama** model to:
-  - Summarize market context
-  - Infer sentiment (bullish/bearish/neutral)
-  - Suggest possible risks and opportunities
-- 🌐 Simple web UI (dark theme, one-page app)
-- 🧪 `/health` and `/test-llm` endpoints to debug your setup
+### 🧠 The Brains (Backend)
+- **Deep Market Data:** Fetches real-time price history via `yfinance`.
+- **Technical Analysis Engine:**
+  - Auto-calculates **RSI (14-day)**.
+  - Tracks **SMA 50** & **SMA 200**.
+  - Detects **Golden Crosses** 🟢 and **Death Crosses** 🔴 automatically.
+- **Fundamental Analysis:** Checks **P/E Ratios**, **Market Cap**, and **Profit Margins** to assess value.
+- **Sentiment Analysis:** Scrapes Google News RSS to gauge market mood.
+
+### 🎨 The Looks (Frontend)
+- **Interactive Charts:** Full candlestick charts powered by **Plotly.js**.
+- **Modern UI:** "Glassmorphism" design with a clean, fintech aesthetic.
+- **Verdict System:** Color-coded badges (BUY/SELL/HOLD) based on AI logic.
+- **Smart Feedback:** Loading states that keep the user engaged.
 
 ---
 
-## Project Structure
+## 🛠️ Tech Stack
+
+- **Backend:** Python, FastAPI, Pandas, Yfinance
+- **AI:** Ollama (running Llama 3.2 locally)
+- **Frontend:** HTML5, CSS3, Plotly.js (No React/Vue build step required)
+
+---
+
+## 📂 Project Structure
 
 ```text
 stockagent/
 ├─ backend/
 │  └─ app/
-│     ├─ __init__.py              # Marks this as a Python package
-│     ├─ main.py                  # FastAPI app, routes, models, startup logs
-│     ├─ analysis.py              # Orchestrates data fetching + LLM analysis
-│     ├─ data_sources.py          # yfinance + Google News RSS helpers
-│     ├─ llm_client.py            # HTTP client for talking to Ollama
-│     ├─ config.py                # Pydantic Settings (.env, timeouts, etc.)
-│     ├─ static/
-│     │  └─ index.html            # Frontend UI (HTML + CSS + JS)
-│     ├─ .env.example             # Example configuration for local dev
-│     └─ .gitignore               # Ignore venv, .env, __pycache__, etc.
-├─ requirements.txt               # Python dependencies
-└─ run.py                         # Convenience script to launch uvicorn
-```
-## Setup Instructions:
-
-Follow these steps to run the project locally:
-
-1. Install Python
-
-Use Python 3.10+.
-
-2. Install Ollama
-
-Download from: https://ollama.com/
-
-Then pull the required model:
-
-ollama pull llama3.2:3b
-
-3. Install project dependencies
-
-Run this inside the root project folder:
-
-pip install -r requirements.txt
-
-4. Run the application
-
-From inside the stockagent directory:
-
-python run.py
-
-
-After running the server, open the UI:
-
-http://localhost:8000/ui/index.html
-
-## 🧪 API Overview
-GET /health
-
-Returns service status.
-
-POST /test-llm
-
-Tests the LLM connection and prints model response.
-
-POST /analyze
-
-Analyzes a ticker using data + news + LLM.
-
-Example:
-
-{
-  "ticker": "NVDA"
-}
-
-## 🎨 Frontend (index.html)
-
-The UI includes:
-
-Input field for stock ticker
-
-Button to run analysis
-
-Display sections for:
-
-LLM summary
-
-Sentiment
-
-Price history
-
-Latest news
-
-Raw JSON output
-
-The UI lives at:
-
-backend/app/static/index.html
+│     ├─ main.py            # FastAPI entry point & routes
+│     ├─ analysis.py        # Logic: Combines Tech + Fund + News for LLM
+│     ├─ data_sources.py    # math: Calculates RSI, SMA, and fetches Chart Data
+│     ├─ llm_client.py      # Connects to your local Ollama instance
+│     └─ static/
+│        └─ index.html      # The Modern UI (Glassmorphism + Charts)
+├─ requirements.txt         # Dependencies (fastapi, pandas, yfinance, etc.)
+└─ run.py                   # Launcher script
