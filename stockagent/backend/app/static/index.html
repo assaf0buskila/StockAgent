@@ -567,36 +567,6 @@
           </span>
         </div>
       </article>
-
-      <article class="result-card">
-        <div class="result-header">
-          <div class="result-title">
-            <span class="result-icon">📰</span>
-            Recent News
-          </div>
-          <div class="result-tag">Google News RSS</div>
-        </div>
-        <div class="result-body" id="news-text">
-          <span class="result-empty">
-            Latest headlines and news context will appear here after analysis.
-          </span>
-        </div>
-      </article>
-
-      <article class="result-card">
-        <div class="result-header">
-          <div class="result-title">
-            <span class="result-icon">📈</span>
-            Price Data
-          </div>
-          <div class="result-tag">yfinance</div>
-        </div>
-        <div class="result-body" id="price-text">
-          <span class="result-empty">
-            Historical price data and trends will be displayed here.
-          </span>
-        </div>
-      </article>
     </section>
   </main>
 
@@ -610,8 +580,6 @@
     const analyzeBtn = document.getElementById("analyze-btn");
     const testLlmBtn = document.getElementById("test-llm-btn");
     const analysisText = document.getElementById("analysis-text");
-    const newsText = document.getElementById("news-text");
-    const priceText = document.getElementById("price-text");
     const sentimentBadge = document.getElementById("sentiment-badge");
     const errorBox = document.getElementById("error-box");
     const healthDot = document.getElementById("health-dot");
@@ -733,8 +701,6 @@
         const data = await res.json();
 
         setPanelText(analysisText, data.analysis || data.summary || "");
-        setPanelText(newsText, data.news || data.raw_news_data || "");
-        setPanelText(priceText, data.price || data.raw_price_data || "");
 
         const sentiment = (data.sentiment || "").toLowerCase();
         setSentiment(sentiment, sentiment ? sentiment[0].toUpperCase() + sentiment.slice(1) : "");
