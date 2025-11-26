@@ -7,6 +7,7 @@ This module handles fetching data from:
 """
 
 import yfinance as yf
+import pandas as pd
 import feedparser
 from urllib.parse import quote_plus
 from typing import Optional
@@ -15,86 +16,111 @@ from datetime import datetime
 
 def get_price_history(ticker: str, period: str = "1mo") -> str:
     """
-    Fetch historical price data using yfinance.
-    
-    Returns a compact textual summary suitable for LLM consumption.
+    Fetch historical price data and calculate technical indicators.
     
     Args:
         ticker: Stock ticker symbol (e.g., 'NVDA', 'AAPL')
-        period: Time period for history
-            Options: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max
+        period: Time period for the visual summary (default 1mo)
             
     Returns:
-        str: Formatted price history summary
-        
-    Raises:
-        ValueError: If ticker is invalid or no data is found
+        str: Formatted price history + Technical Indicators
     """
     try:
-        print(f"[DEBUG] Fetching price data for {ticker} (period={period})")
+        print(f"[DEBUG] Fetching price data for {ticker}")
+        
+        # 1. Fetch 1 Year of data (Approx 252 trading days)
+        # This is the minimum needed to calculate a 200-day SMA (Golden Cross)
         stock = yf.Ticker(ticker)
-        df = stock.history(period=period)
+        df = stock.history(period="1y")
         
         if df.empty:
             return f"No price data found for {ticker}. Please verify the ticker symbol is correct."
+
+        # ---------------------------------------------------------
+        # 2. Calculate Technical Indicators
+        # ---------------------------------------------------------
         
-        # Get the last 7 days for detailed view
+        # Calculate RSI (14-day)
+        delta = df['Close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        df['RSI'] = 100 - (100 / (1 + rs))
+
+        # Calculate SMAs 
+        # We need at least 200 days of data for SMA_200.
+        df['SMA_50'] = df['Close'].rolling(window=50).mean()
+        df['SMA_200'] = df['Close'].rolling(window=200).mean()
+
+        # Get the latest values
+        latest = df.iloc[-1]
+        current_price = latest['Close']
+        current_rsi = latest['RSI']
+        sma_50 = latest['SMA_50']
+        sma_200 = latest['SMA_200']
+
+        # Determine RSI Status
+        rsi_status = "Neutral"
+        if pd.notna(current_rsi):
+            if current_rsi > 70: rsi_status = "Overbought (High risk of pullback)"
+            elif current_rsi < 30: rsi_status = "Oversold (Potential buying opportunity)"
+
+        # Determine Trend (Golden Cross / Death Cross logic)
+        trend = "Neutral"
+        
+        if pd.notna(sma_50) and pd.notna(sma_200):
+            if current_price > sma_50 and current_price > sma_200:
+                trend = "Strong Uptrend (Bullish)"
+                # Check for Golden Cross (SMA 50 crossing above SMA 200)
+                if sma_50 > sma_200:
+                    trend += " | Golden Cross Active 🟢"
+            elif current_price < sma_50 and current_price < sma_200:
+                trend = "Strong Downtrend (Bearish)"
+                # Check for Death Cross (SMA 50 crossing below SMA 200)
+                if sma_50 < sma_200:
+                    trend += " | Death Cross Active 🔴"
+        else:
+            trend = "Insufficient data for Long-Term Trend"
+
+        # ---------------------------------------------------------
+        # 3. Format the Output
+        # ---------------------------------------------------------
+
+        tech_summary = f"""
+🛠️ TECHNICAL ANALYSIS (Automated):
+  • RSI (14-day): {current_rsi:.2f} → {rsi_status}
+  • SMA 50: ${sma_50:.2f}
+  • SMA 200: ${sma_200:.2f}
+  • Trend Signal: {trend}
+"""
+        
+        # We assume the user wants to see the last 7 days of raw data in the text
         tail = df.tail(7)
         lines = []
-        
         for idx, row in tail.iterrows():
             date_str = idx.strftime("%Y-%m-%d")
             close = row["Close"]
-            open_ = row["Open"]
-            high = row["High"]
-            low = row["Low"]
-            volume = int(row["Volume"])
-            
-            # Calculate daily change
-            daily_change = ((close - open_) / open_ * 100) if open_ > 0 else 0.0
+            daily_change = ((close - row["Open"]) / row["Open"] * 100) if row["Open"] > 0 else 0.0
             
             lines.append(
-                f"  {date_str}: Open ${open_:.2f} | High ${high:.2f} | "
-                f"Low ${low:.2f} | Close ${close:.2f} ({daily_change:+.2f}%) | "
-                f"Vol {volume:,}"
+                f"  {date_str}: Close ${close:.2f} ({daily_change:+.2f}%) | RSI: {row['RSI']:.1f}"
             )
         
-        # Calculate key metrics
-        latest_close = tail["Close"].iloc[-1]
-        first_close = tail["Close"].iloc[0]
-        period_change = ((latest_close - first_close) / first_close * 100) if first_close > 0 else 0.0
-        
-        # Calculate simple moving average if we have enough data
-        avg_price = tail["Close"].mean()
-        
-        # Get 52-week high/low if available
-        full_df = stock.history(period="1y")
-        if not full_df.empty:
-            high_52w = full_df["Close"].max()
-            low_52w = full_df["Close"].min()
-            high_52w_str = f"52-week high: ${high_52w:.2f}"
-            low_52w_str = f"52-week low: ${low_52w:.2f}"
-        else:
-            high_52w_str = "52-week high: N/A"
-            low_52w_str = "52-week low: N/A"
-        
-        # Build summary
-        header = f"""Price History for {ticker.upper()} (Period: {period})
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        high_52w = df["Close"].max()
+        low_52w = df["Close"].min()
 
-📊 Current Metrics:
-  • Latest Close: ${latest_close:.2f}
-  • Period Change: {period_change:+.2f}%
-  • Average Price (7d): ${avg_price:.2f}
-  • {high_52w_str}
-  • {low_52w_str}
+        final_output = f"""Price History & Technicals for {ticker.upper()}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{tech_summary}
+📊 Market Metrics:
+  • Current Price: ${current_price:.2f}
+  • 52-Week Range: ${low_52w:.2f} - ${high_52w:.2f}
 
 📈 Recent Trading Days:
-"""
-        
-        result = header + "\n".join(lines)
-        print(f"[DEBUG] Price data fetched successfully for {ticker}")
-        return result
+""" + "\n".join(lines)
+
+        print(f"[DEBUG] Technicals calculated successfully for {ticker}")
+        return final_output
         
     except Exception as e:
         error_msg = f"Error fetching price data for {ticker}: {str(e)}"

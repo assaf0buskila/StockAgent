@@ -40,26 +40,19 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 
-# Mount static files for frontend
-static_dir = Path(__file__).parent / "static"
-if static_dir.exists():
-    app.mount("/ui", StaticFiles(directory=str(static_dir), html=True), name="ui")
-else:
-    print(f"[WARNING] Static directory not found: {static_dir}")
+
 
 app = FastAPI(
     title="Financial AI Agent",
     description="Analyze stocks using live data + a local LLM",
     version="0.1.0",
 )
-
+# Mount static files for frontend
 static_dir = Path(__file__).parent / "static"
-
 if static_dir.exists():
     app.mount("/ui", StaticFiles(directory=str(static_dir), html=True), name="ui")
 else:
     print(f"[WARNING] Static directory not found: {static_dir}")
-
 
 @app.exception_handler(StarletteHTTPException)
 async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):

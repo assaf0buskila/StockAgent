@@ -51,47 +51,42 @@ async def analyze_ticker(ticker: str) -> str:
         news_data = f"Unable to fetch news for {ticker} at this time."
     
     # Step 2: Construct the analysis prompt
-    prompt = f"""You are a senior financial analyst with expertise in equity research and market sentiment analysis.
+    # UPDATED: Added specific instructions for Technical Analysis
+    prompt = f"""You are a professional financial analyst using a mix of fundamental news and technical indicators.
 
-Analyze the following data for **{ticker}** and provide a comprehensive report.
+Analyze the following data for **{ticker}** and provide a structured report.
 
-## MARKET DATA
+MARKET DATA & TECHNICALS
 {price_data}
 
-## RECENT NEWS
+RECENT NEWS
 {news_data}
 
-## YOUR TASK
-Please provide a structured analysis with the following sections:
+YOUR TASK
+Provide a report with these exact sections:
 
-### 1. News Summary
-- Summarize the 3-5 most important news items
-- Focus on developments that could impact stock price
+1. Executive Summary
+ Give a 2-sentence overview of the current situation.
 
-### 2. Sentiment Analysis
-- Overall sentiment: Positive / Neutral / Negative
-- Explain the reasoning based on news content
-- Note any divergence between news sentiment and price action
+2. Technical Analysis
+RSI: State the value.
+Trend: Compare Price vs SMA 50.
+Signals:ONLY mention a "Golden Cross" or "Death Cross" if the "Trend Signal" data explicitly says "Active". Do not infer this yourself.
 
-### 3. Price Action Context
-- Describe recent price trends
-- Correlate specific news events to price movements if apparent
-- Identify any notable patterns or anomalies
+3. News Sentiment
+  Summarize the top news drivers.
+  Rate sentiment as Bullish, Bearish, or Neutral.
 
-### 4. Short-Term Outlook
-- Provide a recommendation: Buy / Hold / Sell
-- Base this on the short-term data provided (days to weeks)
-- List 2-3 key risk factors to monitor
+4. Outlook & Recommendation
+Verdict: BUY, SELL, or HOLD.
+Reasoning: Combine the technicals (RSI/Trends) with the news sentiment.
+Risk: Mention 1 key risk factor.
 
-### 5. Important Disclaimer
-- Note that this analysis is for informational purposes only
-- Not financial advice; investors should do their own research
-
-**Format your response in clear Markdown with headers and bullet points.**
+Style: Professional, concise, using Markdown formatting.
 """
     
     # Step 3: Send to LLM for analysis
-    print(f"[INFO] Sending data to LLM (Llama 3.1)...")
+    print(f"[INFO] Sending data to LLM...")
     try:
         analysis = await ask_llm(prompt)
     except Exception as e:
@@ -105,15 +100,7 @@ Please provide a structured analysis with the following sections:
 async def quick_sentiment(ticker: str) -> dict:
     """
     Quick sentiment analysis without full report.
-    
-    This is a lighter-weight version that returns just sentiment.
     Useful for batch processing multiple tickers.
-    
-    Args:
-        ticker: Stock ticker symbol
-        
-    Returns:
-        dict: Contains 'ticker', 'sentiment', 'confidence'
     """
     try:
         news_data = get_news(ticker, limit=3)
@@ -132,9 +119,16 @@ No other text, just the JSON."""
         # Try to parse as JSON, fallback to neutral if parsing fails
         try:
             import json
-            result = json.loads(response.strip())
-            result['ticker'] = ticker
-            return result
+            # Find the start and end of the JSON object in case LLM adds extra text
+            start = response.find('{')
+            end = response.rfind('}') + 1
+            if start != -1 and end != -1:
+                json_str = response[start:end]
+                result = json.loads(json_str)
+                result['ticker'] = ticker
+                return result
+            else:
+                raise ValueError("No JSON found")
         except:
             return {
                 "ticker": ticker,

@@ -23,6 +23,7 @@
       --gray-600: #4b5563;
       --gray-800: #1f2937;
       --success: #10b981;
+      --warning: #f59e0b;
       --error: #ef4444;
     }
 
@@ -227,10 +228,12 @@
       outline: none;
       transition: all 0.2s;
       font-family: inherit;
+      text-transform: uppercase;
     }
 
     .ticker-input::placeholder {
       color: var(--gray-400);
+      text-transform: none;
     }
 
     .ticker-input:focus {
@@ -376,14 +379,6 @@
       font-size: 1.25rem;
     }
 
-    .result-tag {
-      font-size: 0.75rem;
-      color: var(--gray-500);
-      background: var(--gray-100);
-      padding: 0.25rem 0.75rem;
-      border-radius: 999px;
-    }
-
     .result-body {
       flex: 1;
       font-size: 0.9375rem;
@@ -397,36 +392,76 @@
       font-style: italic;
     }
 
-    .sentiment-badge {
-      padding: 0.375rem 0.875rem;
-      border-radius: 999px;
+    /* DISCLAIMER BOX STYLE - NEW! */
+    .disclaimer-box {
+      margin-top: 2rem;
+      padding: 1rem;
+      background-color: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
       font-size: 0.75rem;
-      font-weight: 500;
-      border: 1px solid;
+      color: var(--gray-600);
+      text-align: center;
+      line-height: 1.5;
     }
 
-    .sentiment-badge[data-tone="bullish"] {
+    .disclaimer-box strong {
+      color: var(--gray-800);
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    /* Verdict Badge Styles */
+    .verdict-badge {
+      padding: 0.375rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border: 1px solid;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .verdict-badge[data-verdict="BUY"] {
       background: rgba(16, 185, 129, 0.1);
       color: var(--success);
       border-color: var(--success);
     }
 
-    .sentiment-badge[data-tone="bearish"] {
+    .verdict-badge[data-verdict="SELL"] {
       background: rgba(239, 68, 68, 0.1);
       color: var(--error);
       border-color: var(--error);
     }
 
-    .sentiment-badge[data-tone="neutral"] {
-      background: rgba(59, 130, 246, 0.1);
-      color: var(--accent-blue);
-      border-color: var(--accent-blue);
+    .verdict-badge[data-verdict="HOLD"] {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--warning);
+      border-color: var(--warning);
     }
 
-    .sentiment-badge[data-tone=""] {
+    .verdict-badge[data-verdict="WAITING"] {
       background: var(--gray-100);
       color: var(--gray-500);
       border-color: var(--gray-200);
+    }
+
+    /* Markdown Heading Fixes for the Result Body */
+    .result-body h3 {
+        color: var(--navy-dark);
+        font-size: 1.1rem;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        border-bottom: 2px solid var(--gray-100);
+        padding-bottom: 0.25rem;
+    }
+    .result-body ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    .result-body strong {
+        color: var(--navy-medium);
+        font-weight: 600;
     }
 
     /* Footer */
@@ -449,48 +484,26 @@
       .header {
         padding: 1rem;
       }
-
-      .header-nav {
-        gap: 1rem;
-      }
-
       .main {
         padding: 2rem 1rem;
       }
-
       .hero-title {
         font-size: 2.5rem;
       }
-
-      .hero-subtitle {
-        font-size: 1.125rem;
-      }
-
-      .form-section {
-        padding: 2rem 1.5rem;
-      }
-
       .input-group {
         flex-direction: column;
       }
-
       .ticker-input {
         min-width: 100%;
       }
-
       .btn {
         width: 100%;
         justify-content: center;
-      }
-
-      .results-grid {
-        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
 <body>
-  <!-- Header -->
   <header class="header">
     <div class="header-container">
       <a href="/" class="logo">
@@ -507,20 +520,17 @@
     </div>
   </header>
 
-  <!-- Main Content -->
   <main class="main">
-    <!-- Hero Section -->
     <section class="hero">
-      <div class="hero-label">AI-Powered Stock Analysis</div>
+      <div class="hero-label">AI-Powered Data Analyst</div>
       <h1 class="hero-title">
-        Turn tickers into <span class="hero-title-accent">intelligent insights</span>
+        Market insights with <span class="hero-title-accent">Math & Logic</span>
       </h1>
       <p class="hero-subtitle">
-        Enter any stock symbol and let StockAgent combine real-time market data with local AI to generate comprehensive research summaries.
+        Powered by RSI, Moving Averages, and Llama 3.2. Enter a ticker to generate a full technical report.
       </p>
     </section>
 
-    <!-- Form Section -->
     <section class="form-section">
       <label class="form-label">Stock Ticker</label>
       <div class="input-group">
@@ -528,51 +538,56 @@
           id="ticker-input"
           class="ticker-input"
           type="text"
-          placeholder="Enter ticker (e.g., NVDA, AAPL, MSFT)"
+          placeholder="Enter ticker (e.g., NVDA, TSLA)"
           autocomplete="off"
         />
         <button id="analyze-btn" class="btn btn-primary">
           <span>→</span>
-          Analyze
+          Analyze Ticker
         </button>
         <button id="test-llm-btn" class="btn btn-secondary">
-          Test LLM
+          Test Connection
         </button>
       </div>
       <div class="form-status">
         <div class="status-indicator">
           <div class="status-indicator-dot" id="analysis-status-dot"></div>
-          <span id="analysis-status-label">Ready</span>
+          <span id="analysis-status-label">System Ready</span>
         </div>
-        <div>Try a ticker like <strong>NVDA</strong> or <strong>AAPL</strong></div>
+        <div>New: Includes <strong>Golden Cross</strong> Detection</div>
       </div>
       <div id="error-box" class="error-message"></div>
     </section>
 
-    <!-- Results Grid -->
     <section class="results-grid">
       <article class="result-card">
         <div class="result-header">
           <div class="result-title">
             <span class="result-icon">📊</span>
-            AI Summary
+            Analyst Report
           </div>
-          <div class="sentiment-badge" id="sentiment-badge" data-tone="">
-            No analysis yet
+          <div class="verdict-badge" id="verdict-badge" data-verdict="WAITING">
+            Enter Ticker
           </div>
         </div>
         <div class="result-body" id="analysis-text">
           <span class="result-empty">
-            Run an analysis to see a structured breakdown of price action, news drivers, and investment outlook.
+            Run an analysis to see a structured breakdown of Technicals, News Sentiment, and the Final Verdict.
           </span>
         </div>
-      </article>
+        
+        <div class="disclaimer-box">
+          <strong>⚠️ IMPORTANT LEGAL DISCLAIMER:</strong>
+          This report is generated by an Artificial Intelligence system and is for <strong>educational and informational purposes only</strong>. It relies on third-party data which may be delayed or inaccurate. 
+          <br/><br/>
+          This is <strong>NOT financial advice</strong>. Do not buy or sell securities based solely on this information. Always consult a certified financial advisor before making investment decisions.
+        </div>
+        </article>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
-    Built with <span class="footer-accent">FastAPI</span>, <span class="footer-accent">Ollama</span>, and <span class="footer-accent">yfinance</span>
+    Built with <span class="footer-accent">FastAPI</span>, <span class="footer-accent">Ollama</span>, and <span class="footer-accent">Pandas</span>
   </footer>
 
   <script>
@@ -580,12 +595,28 @@
     const analyzeBtn = document.getElementById("analyze-btn");
     const testLlmBtn = document.getElementById("test-llm-btn");
     const analysisText = document.getElementById("analysis-text");
-    const sentimentBadge = document.getElementById("sentiment-badge");
+    const verdictBadge = document.getElementById("verdict-badge");
     const errorBox = document.getElementById("error-box");
     const healthDot = document.getElementById("health-dot");
     const healthText = document.getElementById("health-text");
     const analysisStatusDot = document.getElementById("analysis-status-dot");
     const analysisStatusLabel = document.getElementById("analysis-status-label");
+
+    // Helper: Markdown cleaner
+    function formatMarkdown(text) {
+        if (!text) return "";
+        let html = text
+            // 1. Remove all double asterisks (**) used for bolding
+            .replace(/\*\*/g, "") 
+            // 2. Turn Headers (###) into HTML tags
+            .replace(/^### (.*$)/gim, '<h3>$1</h3>') 
+            .replace(/^## (.*$)/gim, '<h3>$1</h3>')
+            // 3. Turn List items (- or *) into bullet points
+            .replace(/^[-*] (.*$)/gim, '<ul><li>$1</li></ul>') 
+            // 4. Handle newlines
+            .replace(/\n/gim, '<br />'); 
+        return html;
+    }
 
     function setHealthStatus(ok, message) {
       if (ok) {
@@ -603,46 +634,38 @@
         analysisStatusLabel.textContent = text || "Ready";
       } else if (state === "running") {
         analysisStatusDot.className = "status-indicator-dot active";
-        analysisStatusLabel.textContent = text || "Analyzing...";
+        analysisStatusLabel.textContent = text || "Processing...";
       } else if (state === "error") {
         analysisStatusDot.className = "status-indicator-dot error";
         analysisStatusLabel.textContent = text || "Error";
       }
     }
 
-    function setSentiment(tone, label) {
-      sentimentBadge.dataset.tone = tone || "";
-      if (!tone) {
-        sentimentBadge.textContent = "No analysis yet";
-        return;
-      }
-      if (tone === "bullish") {
-        sentimentBadge.textContent = label || "Bullish";
-      } else if (tone === "bearish") {
-        sentimentBadge.textContent = label || "Bearish";
-      } else if (tone === "neutral") {
-        sentimentBadge.textContent = label || "Neutral";
-      } else {
-        sentimentBadge.textContent = label || "Unknown";
-      }
-    }
+    function setVerdict(text) {
+        verdictBadge.dataset.verdict = "WAITING";
+        verdictBadge.textContent = "ANALYSIS READY";
 
-    function setPanelText(element, text) {
-      if (!text || !text.trim()) {
-        element.innerHTML = '<span class="result-empty">No data available for this section.</span>';
-      } else {
-        element.textContent = text;
-      }
+        if (!text) return;
+
+        const match = text.match(/Verdict:\s*(BUY|SELL|HOLD)/i);
+
+        if (match && match[1]) {
+            const verdict = match[1].toUpperCase();
+            verdictBadge.dataset.verdict = verdict;
+            verdictBadge.textContent = verdict; 
+        } else {
+            verdictBadge.dataset.verdict = "WAITING";
+            verdictBadge.textContent = "INSIGHTS";
+        }
     }
 
     async function checkHealth() {
       try {
         const res = await fetch("/health");
         if (!res.ok) throw new Error("Health check failed");
-        const data = await res.json();
-        setHealthStatus(true, "Online");
+        setHealthStatus(true, "System Online");
       } catch (err) {
-        setHealthStatus(false, "Offline");
+        setHealthStatus(false, "API Offline");
       }
     }
 
@@ -654,17 +677,17 @@
       
       try {
         const res = await fetch("/test-llm", { method: "POST" });
-        if (!res.ok) {
-          throw new Error("LLM test failed");
-        }
+        if (!res.ok) throw new Error("LLM test failed");
         const data = await res.json();
-        setPanelText(analysisText, (data && (data.reply || data.response)) || "LLM connection successful.");
-        setSentiment("", "");
-        setStatus("idle", "LLM OK");
+        
+        analysisText.innerHTML = "<strong>LLM Connection Successful:</strong><br/>" + (data.reply || "OK");
+        verdictBadge.dataset.verdict = "WAITING";
+        verdictBadge.textContent = "CONNECTED";
+        setStatus("idle", "LLM Connected");
       } catch (err) {
-        errorBox.textContent = "LLM test failed. Please check Ollama is running.";
+        errorBox.textContent = "LLM test failed. Is Ollama running?";
         errorBox.classList.add("visible");
-        setStatus("error", "LLM error");
+        setStatus("error", "LLM Error");
       } finally {
         analyzeBtn.disabled = false;
         testLlmBtn.disabled = false;
@@ -681,9 +704,13 @@
         return;
       }
 
-      setStatus("running", "Analyzing " + ticker + "...");
+      setStatus("running", "Crunching numbers for " + ticker + "...");
       analyzeBtn.disabled = true;
       testLlmBtn.disabled = true;
+      analysisText.innerHTML = '<span class="result-empty">Analyzing ' + ticker + '... This may take 10-20 seconds.</span>';
+      
+      verdictBadge.dataset.verdict = "WAITING";
+      verdictBadge.textContent = "CALCULATING...";
 
       try {
         const res = await fetch("/analyze", {
@@ -699,16 +726,19 @@
         }
 
         const data = await res.json();
+        const rawText = data.analysis || "";
 
-        setPanelText(analysisText, data.analysis || data.summary || "");
+        analysisText.innerHTML = formatMarkdown(rawText);
 
-        const sentiment = (data.sentiment || "").toLowerCase();
-        setSentiment(sentiment, sentiment ? sentiment[0].toUpperCase() + sentiment.slice(1) : "");
-        setStatus("idle", "Complete");
+        setVerdict(rawText.replace(/\*\*/g, ""));
+
+        setStatus("idle", "Analysis Complete");
       } catch (err) {
         errorBox.textContent = err.message || "Unexpected error during analysis.";
         errorBox.classList.add("visible");
         setStatus("error", "Failed");
+        analysisText.innerHTML = '<span class="result-empty">Analysis failed. Check the error message above.</span>';
+        verdictBadge.textContent = "ERROR";
       } finally {
         analyzeBtn.disabled = false;
         testLlmBtn.disabled = false;
@@ -718,9 +748,7 @@
     analyzeBtn.addEventListener("click", handleAnalyze);
     testLlmBtn.addEventListener("click", handleTestLlm);
     tickerInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        handleAnalyze();
-      }
+      if (e.key === "Enter") handleAnalyze();
     });
 
     checkHealth();
